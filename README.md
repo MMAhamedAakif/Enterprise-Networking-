@@ -4,6 +4,8 @@
 ## 📌 Project Overview
 
 This project demonstrates the design and implementation of a multi-floor enterprise network infrastructure using Cisco Packet Tracer.
+<img width="1246" height="1129" alt="version finish" src="https://github.com/user-attachments/assets/c20794d0-f1b2-43a4-ba10-9d0d3d40fdf9" />
+
 
 The network is designed for an organization with three floors, multiple departments, centralized server services, and redundant network connections to support reliable communication between departments.
 
