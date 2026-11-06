@@ -1,0 +1,297 @@
+!01. SWITCH 1 / L3 switch  CONFIG ------------------------------------
+
+
+EN 
+CONF T
+NO IP DOMAIN-LOOKUP 
+BANNER MOTD #No unauthorised Access in SW1#
+
+line console 0
+password cisco 
+login 
+exit 
+
+enable password cisco
+service password-encryption 
+exit 
+wr
+
+!----SSH CONFIG ------------------------------------
+
+end
+conf t
+ip domain name cisco.net 
+username admin password cisco 
+crypto key generate rsa 
+1024 
+
+line vty 0 15 
+login local 
+transport input ssh 
+exit 
+
+!02.	ROUTER CORE SAME CODE  CONFIG ------------------------------------
+
+
+EN 
+CONF T
+NO IP DOMAIN-LOOKUP 
+BANNER MOTD #No unauthorised Access in ROUTER1#
+
+line console 0
+password cisco 
+login 
+exit 
+
+enable password cisco
+service password-encryption 
+exit 
+wr
+
+!----SSH CONFIG ------------------------------------
+
+end
+conf t
+ip domain name cisco.net 
+username admin password cisco 
+crypto key generate rsa 
+1024 
+
+IP SSH VERSION 2
+line vty 0 15 
+login local 
+transport input ssh 
+exit 
+
+
+
+!03. ===========Interface config ========================
+
+conf t
+!what if i use vtp here -server as l3 sw1 and others client -
+vtp domain test 
+vtp mode server 
+vtp password cisco123
+vtp version 2
+
+vlan 10 
+name SALES 
+vlan 20 
+name HR 
+vlan 30 
+name FINANCE 
+vlan 40 
+name ADMIN 
+vlan 50 
+name ICT 
+vlan 60 
+name SERVER 
+
+!---client vtp config ----------------------------
+end
+conf t
+vtp domain test 
+vtp mode client 
+vtp password cisco123
+end 
+
+!----int config vlan ------------------------------
+conf t
+int range fa 0/1-2 
+switchport mode trunk 
+exit 
+
+int range fa 0/3-24 
+switchport mode access
+switchport access vlan 50 
+exit 
+
+
+!04.===portsecurity setting (l2 switch) ========================
+
+end
+conf t
+int range fa 0/3-24 
+!if you already added this part you don't need it 
+!switchport mode access
+!switchport access vlan 10 
+switchport port-security
+switchport port-security maximum 1
+switchport port-security mac-address sticky
+switchport port-security violation shutdown
+no sh 
+exit
+do sh port-security 
+
+
+!05.=no switchport for the connectng l3 switch and coer router====
+
+
+!--switch and router so can able to add ip add ----
+int range gig 1/0/23-24 
+no switchport
+exit 
+ 
+
+ !======OSPF config for dynamic routing ==========================
+
+!----router ospf config------------------
+ router ospf 1
+ router-id 1.1.1.1 
+ network 195.136.17.0 0.0.0.3 area 0
+ network 195.136.17.4 0.0.0.3 area 0
+
+ network 172.16.3.144 0.0.0.3 area 0
+ network 172.16.3.152 0.0.0.3 area 0
+
+
+ router ospf 1
+ router-id 4.4.4.4
+ network 195.136.17.12 0.0.0.3 area 0
+ network 195.136.17.8 0.0.0.3 area 0
+
+ network 172.16.3.156 0.0.0.3 area 0
+ network 172.16.3.148 0.0.0.3 area 0
+
+ !-----isp config ospf ---------------------
+
+ router ospf 1
+ router-id 5.5.5.5
+  network 195.136.17.0 0.0.0.3 area 0
+   network 195.136.17.8 0.0.0.3 area 0
+
+ router ospf 1
+ router-id 6.6.6.6
+   network 195.136.17.12 0.0.0.3 area 0
+   network 195.136.17.4 0.0.0.3 area 0
+
+
+
+
+ !---l3 switch1 config ospf ------------------------------
+
+ip routing 
+ router ospf 1
+ router-id 3.3.3.3
+ network 172.16.1.0 0.0.0.127 area 0 
+ network 172.16.1.128 0.0.0.127 area 0 
+ network 172.16.2.0 0.0.0.127 area 0 
+ network 172.16.2.128 0.0.0.127 area 0 
+ network 172.16.3.0 0.0.0.127 area 0 
+ network 172.16.3.128 0.0.0.15 area 0 
+
+ network 172.16.3.144 0.0.0.127 area 0 
+ network 172.16.3.148 0.0.0.127 area 0 
+
+ !---l3 switch2 config ospf ------------------------------
+
+ip routing 
+ router ospf 1
+ router-id 2.2.2.2
+ network 172.16.1.0 0.0.0.127 area 0 
+ network 172.16.1.128 0.0.0.127 area 0 
+ network 172.16.2.0 0.0.0.127 area 0 
+ network 172.16.2.128 0.0.0.127 area 0 
+ network 172.16.3.0 0.0.0.127 area 0 
+ network 172.16.3.128 0.0.0.15 area 0 
+
+ network 172.16.3.152 0.0.0.127 area 0 
+ network 172.16.3.156 0.0.0.127 area 0 
+
+
+
+ !===========DHCP GUI + CONFIG + L3 SWITCH ==================
+
+ !---no need to set for L2 switch L3 switch only ------------
+
+INT VLAN 10 	
+no sh 
+ip add 172.16.1.1 255.255.255.128
+!dhcp server address 172.16.3.130
+ip helper-address 172.16.3.130 
+ex
+
+INT VLAN 20 	
+no sh 
+ip add 172.16.1.129 255.255.255.128
+ip helper-address 172.16.3.130 
+ex
+
+
+INT VLAN 30 	
+no sh 
+ip add 172.16.2.1 255.255.255.128
+ip helper-address 172.16.3.130 
+ex
+
+INT VLAN 40 	
+no sh 
+ip add 172.16.2.129 255.255.255.128
+ip helper-address 172.16.3.130 
+ex
+
+INT VLAN 50 	
+no sh 
+ip add 172.16.3.1 255.255.255.128
+ip helper-address 172.16.3.130  
+ex
+
+INT VLAN 60 	
+no sh 
+ip add 172.16.3.129 255.255.255.240
+ip helper-address 172.16.3.130  
+ex
+
+
+
+!=== NAT CONFIG -==============================
+
+!--core router 1 ---------------------------------
+ip nat inside source list 1 int se0/2/0 overload 
+ip nat inside source list 1 int se0/2/1 overload
+
+access-list 1 permit 172.16.1.0 0.0.0.127 
+access-list 1 permit 172.16.1.128 0.0.0.127  
+access-list 1 permit 172.16.2.0 0.0.0.127  
+access-list 1 permit 172.16.2.128 0.0.0.127  
+access-list 1 permit 172.16.3.0 0.0.0.127  
+access-list 1 permit 172.16.3.128 0.0.0.15  
+
+int range gig 0/0-1 
+ip nat inside 
+exit 
+
+!not net its nat (a)
+int se0/2/0
+ip nat outside 
+int se0/2/1 
+ip nat outside 
+do wr
+
+!===========defult static route ==================
+
+!---l3 switch -----------------------
+ip route 0.0.0.0 0.0.0.0 gig 1/0/23
+ip route 0.0.0.0 0.0.0.0 gig 1/0/24  70
+do wr
+
+
+!---router  -----------------------
+ip route 0.0.0.0 0.0.0.0 se0/2/0
+ip route 0.0.0.0 0.0.0.0 se0/2/1  70
+do wr
+
+
+
+
+!=====ssh connection ===========================
+!-sh ip int bri so ip will show (up)----------------
+
+ssh -l admin 172.16.3.145 -connect to l3 switch 1
+
+
+ssh -l admin 172.16.1.1 - connect ot L3 switch 2
+ssh -l admin 172.16.1.129 -connect to l3 switch 2
+
+ssh -l admin 172.16.3.157- connect ot L3 switch 2
+ssh -l admin 172.16.3.153 -connect to l3 switch 2
