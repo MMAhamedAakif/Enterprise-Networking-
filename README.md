@@ -119,4 +119,4 @@ Cisco Packet Tracer
 
 ## 👨‍💻 Project Type
 
-Academic / Practical Networking Project
+Practical Networking Project
